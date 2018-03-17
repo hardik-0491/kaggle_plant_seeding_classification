@@ -2,14 +2,14 @@ import tensorflow as tf
 import batch_builder as bb
 import prepare_dataset
 
-image_height = 400
-image_width = 400
+image_height = 300
+image_width = 300
 
 categories_count = 12
 
 learning_rate = 1e-4
 epoch_count = 1
-training_batch_size = 5
+training_batch_size = 10
 validation_batch_size = 20
 
 tf.reset_default_graph()
@@ -38,27 +38,27 @@ output = tf.placeholder(dtype=tf.float32, shape=[None, categories_count])
 
 
 # Convolution Layers
-# [Batch, 400, 400, 3] -> [Batch, 400, 400, 3*16]
-conv1 = tf.layers.conv2d(inputs=input, filters=3*16, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
-# [Batch, 400, 400, 3*16] -> [Batch, 200, 200, 3*16]
-pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+# [Batch, 300, 300, 3] -> [Batch, 300, 300, 3*16]
+conv1 = tf.layers.conv2d(inputs=input, filters=3*16, kernel_size=[7,7], padding="same", activation=tf.nn.relu)
+# [Batch, 300, 300, 3*16] -> [Batch, 100, 100, 3*16]
+pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=3)
 
-# [Batch, 200, 200, 3*16] -> [Batch, 200, 200, 3*32]
-conv2 = tf.layers.conv2d(inputs=pool1, filters=3*32, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
-# [Batch, 200, 200, 3*32] -> [Batch, 100, 100, 3*32]
+# [Batch, 100, 100, 3*16] -> [Batch, 100, 100, 3*32]
+conv2 = tf.layers.conv2d(inputs=pool1, filters=3*32, kernel_size=[7,7], padding="same", activation=tf.nn.relu)
+# [Batch, 100, 100, 3*32] -> [Batch, 50, 50, 3*32]
 pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
-# [Batch, 100, 100, 3*32 -> [Batch, 100, 100, 3*64]
-conv3 = tf.layers.conv2d(inputs=pool2, filters=3*64, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
-# [Batch, 100, 100, 3*64] -> [Batch, 50, 50, 3*64]
+# [Batch, 50, 50, 3*32 -> [Batch, 50, 50, 3*64]
+conv3 = tf.layers.conv2d(inputs=pool2, filters=3*64, kernel_size=[7,7], padding="same", activation=tf.nn.relu)
+# [Batch, 50, 50, 3*64] -> [Batch, 25, 25, 3*64]
 pool3 = tf.layers.max_pooling2d(inputs=conv3, pool_size=[2, 2], strides=2)
 
-# [Batch, 50, 50, 3*64] -> [Batch, 50, 50, 3*128]
-conv4 = tf.layers.conv2d(inputs=pool3, filters=3*128, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
-# [Batch, 50, 50, 3*128] -> [Batch, 25, 25, 3*128]
-pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[2, 2], strides=2)
+# # [Batch, 50, 50, 3*64] -> [Batch, 50, 50, 3*128]
+# conv4 = tf.layers.conv2d(inputs=pool3, filters=3*128, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
+# # [Batch, 50, 50, 3*128] -> [Batch, 25, 25, 3*128]
+# pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[2, 2], strides=2)
 
-pool4_flat = tf.reshape(pool4, [-1, 50*50*3*128])
+pool4_flat = tf.reshape(pool3, [-1, 25*25*3*64])
 
 # Dense Neural Network Layers
 dense1 = tf.layers.dense(inputs=pool4_flat, units=1024, activation=tf.nn.relu)
@@ -70,7 +70,7 @@ dropout2 = tf.layers.dropout(inputs=dense2, rate=0.4)
 logits = tf.layers.dense(inputs=dropout2, units=categories_count)
 
 # Loss
-loss = tf.losses.softmax_cross_entropy(logits=logits, onehot_labels=output)
+loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(logits=logits, onehot_labels=output))
 
 # Adam Optimizer
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
