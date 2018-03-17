@@ -38,8 +38,8 @@ inv_categ_dict = {
 }
 
 
-image_height = 400
-image_width = 400
+image_height = 300
+image_width = 300
 
 
 def get_one_hot_vector(category_name):
@@ -52,11 +52,11 @@ def get_image_data(image: Image):
     resized_image = image.resize((image_width, image_height), Image.ANTIALIAS)
     data = resized_image.load()
     vector = np.zeros((image_width, image_height, 3), dtype=int)
-    for i in range(400):
-        for j in range(400):
-            vector[i, j, 0] = data[i, j][0]
-            vector[i, j, 1] = data[i, j][1]
-            vector[i, j, 2] = data[i, j][2]
+    for i in range(image_width):
+        for j in range(image_height):
+            vector[i, j, 0] = (data[i, j][0] - 128) / 128
+            vector[i, j, 1] = (data[i, j][1] - 128) / 128
+            vector[i, j, 2] = (data[i, j][2] - 128) / 128
     return vector
 
 
