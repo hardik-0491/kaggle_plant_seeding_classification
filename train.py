@@ -28,6 +28,10 @@ print('Validation Data size:', len(validation_data_set))
 
 train_data = bb.BatchBuilder(training_data_set, training_batch_size)
 validation_data = bb.BatchBuilder(validation_data_set, validation_batch_size)
+test_data = bb.BatchBuilder(training_data_set, 1)
+
+# Output File
+file_name = 'predictions.csv'
 
 # Placeholders
 
@@ -117,3 +121,25 @@ with tf.Session() as sess:
     # Save Model
     save_path = saver.save(sess, 'tf_model.ckpt')
     print('Model saved in path:', save_path)
+
+    # Generate Output File
+    file_data = 'file,species'
+
+    for data in test_dataset:
+
+        # Prepare Data
+        test_data = prepare_dataset.get_testing_data_line(data)
+        test_image = [test_data['input']]
+        feed_dict = {input: test_image}
+
+        # Make Prediction
+        test_data['output'] = sess.run(logits, feed_dict=feed_dict)
+        actual_prediction = tf.arg_max(test_data['output'], 1)
+        test_data['category'] = prepare_dataset.inv_categ_dict[actual_prediction]
+
+        # Add line to CSV file
+        file_data += '\r\n' + data + ',' + test_data['category']
+
+    # Prepare CSV File
+    with open(file_name, 'w') as csv_file:
+        csv_file.write(file_data)
